@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فصل صفحات PDF</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      color: #0077b6;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+    input[type="file"] {
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 8px 20px;
+      font-size: 15px;
+      background-color: #0077b6;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #023e8a;
+    }
+    a {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 8px 16px;
+      background-color: #90e0ef;
+      color: #000;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    a:hover {
+      background-color: #48cae4;
+    }
+  </style>
+</head>
+<body>
+  <h2>فصل ملف PDF إلى نمطين</h2>
+  <input type="file" id="fileInput" accept="application/pdf"><br>
+  <button onclick="splitPDF()">فصل الملف</button>
+  <br><br>
+  <a id="download1" style="display:none;">تحميل النمط الأول</a><br>
+  <a id="download2" style="display:none;">تحميل النمط الثاني</a>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    async function splitPDF() {
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput.files.length) return alert("اختر ملف PDF أولًا");
+
+      const file = fileInput.files[0];
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+      const totalPages = pdfDoc.getPageCount();
+
+      const pdf1 = await PDFLib.PDFDocument.create();
+      const pdf2 = await PDFLib.PDFDocument.create();
+
+      for (let i = 0; i < totalPages; i += 4) {
+        for (let j = 0; j < 2; j++) {
+          if (i + j < totalPages) {
+            const [page] = await pdf1.copyPages(pdfDoc, [i + j]);
+            pdf1.addPage(page);
+          }
+        }
+        for (let j = 2; j < 4; j++) {
+          if (i + j < totalPages) {
+            const [page] = await pdf2.copyPages(pdfDoc, [i + j]);
+            pdf2.addPage(page);
+          }
+        }
+      }
+
+      const blob1 = new Blob([await pdf1.save()], { type: 'application/pdf' });
+      const blob2 = new Blob([await pdf2.save()], { type: 'application/pdf' });
+
+      const url1 = URL.createObjectURL(blob1);
+      const url2 = URL.createObjectURL(blob2);
+
+      const link1 = document.getElementById('download1');
+      const link2 = document.getElementById('download2');
+
+      link1.href = url1;
+      link1.download = "نمط_1.pdf";
+      link1.textContent = "تحميل النمط الأول";
+      link1.style.display = "inline-block";
+
+      link2.href = url2;
+      link2.download = "نمط_2.pdf";
+      link2.textContent = "تحميل النمط الثاني";
+      link2.style.display = "inline-block";
+    }
+  </script>
+</body>
+</html>
